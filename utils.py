@@ -36,12 +36,8 @@ model_dict = {}
 def init_flux_pipeline():
     global pipe
     if pipe is None:
-        token = os.getenv("HF_TOKEN")
-        if not token:
-            raise ValueError("HF_TOKEN environment variable not set.")
         pipe = FluxPipeline.from_pretrained(
-            "black-forest-labs/FLUX.1-schnell",
-            use_auth_token=token,
+            "black-forest-labs/FLUX.1-dev",
             torch_dtype=torch.bfloat16
         )
         pipe = pipe.to("cuda")
