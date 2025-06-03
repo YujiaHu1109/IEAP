@@ -56,5 +56,9 @@ For example:
 python main_json.py "assets/a12.jpg" "instructions.json"
 ```
 
+## 🔦 ToDo List
+- [ ] Release on arXiv.
+- [ ] More functions and demos.
+
 ## 🔗 Related Projects
 We sincerely thank the excellent open-source projects: [OminiControl](https://github.com/Yuanshi9815/OminiControl.git) and [Sa2VA](https://github.com/magic-research/Sa2VA.git).
