@@ -590,5 +590,3 @@ def layout_change(bbox, instruction):
     bbox = extract_last_bbox(result)
     return bbox
 
-if __name__ == "__main__":
-    init_flux_pipeline()
