@@ -49,11 +49,11 @@ python main.py "assets/a12.jpg" "Change the action of the woman to running and m
 
 If you have already had a json file for editing:
 ```bash
-python main_json.py image_path editing_instructions
+python main_json.py image_path json_path
 ```
 For example:
 ```bash
-python main_json.py "assets/a12.jpg" "Change the action of the woman to running and minify the woman."
+python main_json.py "assets/a12.jpg" "instructions.json"
 ```
 
 ## 🔗 Related Projects
