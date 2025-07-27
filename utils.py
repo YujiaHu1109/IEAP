@@ -1,4 +1,3 @@
-import spaces
 import torch
 import numpy as np
 from diffusers.pipelines import FluxPipeline
@@ -15,8 +14,6 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from scipy.ndimage import binary_dilation
 import cv2
 import openai
-import subprocess
-subprocess.run('pip install flash-attn --no-build-isolation', env={'FLASH_ATTENTION_SKIP_CUDA_BUILD': "TRUE"}, shell=True)
 from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception_type
 
 
@@ -90,7 +87,7 @@ def cot_with_gpt(image_uri, instruction):
                     - Appearance Change: e.g.: make the cup have a floral pattern
                     - Move: e.g.: move the plane to the left
                     - Resize: e.g.: enlarge the clock
-                    - Tone Transfer: e.g.: change the weather to foggy, change the time to spring
+                    - Tone Transfer: e.g.: change the weather to foggy
                     - Style Change: e.g.: make the style of the image to cartoon
                     Respond *only* with a numbered list.  
                     Each line must begin with the category in square brackets, then the instruction. Please strictly follow the atomic categories.
@@ -159,14 +156,13 @@ def extract_last_bbox(result):
     x0, y0, x1, y1 = map(int, last_match[1:])
     return x0, y0, x1, y1
 
-@spaces.GPU
 def infer_with_DiT(task, image, instruction, category):
     init_flux_pipeline()
 
     if task == 'RoI Inpainting':
         if category == 'Add' or category == 'Replace':
             lora_path = "weights/add.safetensors"
-            added = extract_object_with_gpt(instruction)
+            added = extract_target_with_gpt(instruction)
             instruction_dit = f"add {added} on the black region"
         elif category == 'Remove' or category == 'Action Change':
             lora_path = "weights/remove.safetensors"
@@ -318,6 +314,32 @@ def extract_region_with_gpt(instruction):
         print(f"GPT extraction failed: {e}")
         return instruction 
     
+def extract_target_with_gpt(instruction):
+    system_prompt = (
+        "You are a helpful assistant that extracts target region being edited in an image editing instruction. "
+        "Only return a concise noun phrase describing the target region. "
+        "Examples:\n"
+        "- Input: 'Add a red hat to the man on the left' → Output: 'a red hat'\n"
+        "- Input: 'Replace the cat with a dog' → Output: 'a dog'\n"
+        "Now extract the target region for this instruction:"
+    )
+
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": instruction}
+            ],
+            temperature=0.2,
+            max_tokens=20,
+        )
+        object_phrase = response.choices[0].message['content'].strip().strip('"')
+        return object_phrase
+    except Exception as e:
+        print(f"GPT extraction failed: {e}")
+        return instruction 
+
 def get_masked(mask, image):
     if mask.shape[:2] != image.size[::-1]:  
         raise ValueError(f"Mask size {mask.shape[:2]} does not match image size {image.size}")
@@ -380,7 +402,6 @@ def crop_masked_region(image, pred_mask_np):
 
     return Image.fromarray(cropped_image, mode='RGBA')
 
-@spaces.GPU
 def roi_localization(image, instruction, category):
     model, tokenizer = get_model("ByteDance/Sa2VA-8B")
     if category == 'Add':
@@ -578,6 +599,8 @@ def layout_change(bbox, instruction):
                     Input bounding boxes: [("chair", [100, 350, 200, 450]), ("lamp", [300, 200, 360, 300])]
                     Editing instruction: Swap the location of the chair and the lamp.
                     Output bounding boxes: [("chair", [280, 200, 380, 300]), ("lamp", [120, 350, 180, 450])]
+
+
                     Now, the current bounding boxes is {bbox}, the instruction is {instruction}. Let's think step by step, and output the edited layout.
                     '''},
                 ],
@@ -590,3 +613,5 @@ def layout_change(bbox, instruction):
     bbox = extract_last_bbox(result)
     return bbox
 
+if __name__ == "__main__":
+    init_flux_pipeline()
