@@ -73,7 +73,7 @@ We sincerely thank the excellent open-source projects: [OminiControl](https://gi
 @article{hu2025ieap,
   title={Image Editing As Programs with Diffusion Models},
   author={Hu, Yujia and Liu, Songhua and Tan, Zhenxiong and Yang, Xingyi and Wang, Xinchao},
-  journal={arXiv preprint arXiv:2506.04158},
+  journal={NeurIPS},
   year={2025}
 }
 ```
